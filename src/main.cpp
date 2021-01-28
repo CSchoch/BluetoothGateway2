@@ -27,7 +27,7 @@ IPAddress subnet(255, 255, 255, 0);
 
 unsigned long lastUpdated;
 unsigned long lastLed;
-const char *nameprefix = "Temeratures";
+const char *nameprefix = "Tempratures";
 uint8_t stateLed = HIGH;
 boolean updateActive;
 RTC_DATA_ATTR unsigned long bootCount;
@@ -52,7 +52,7 @@ BLEScan *pBLEScan;
 bool newData;
 int dataIndex;
 Data tempData;
-Data sensorData[4];
+Data sensorData[8];
 
 void setup_wifi()
 {
@@ -146,7 +146,7 @@ void mqttCallback(char *topic, byte *payload, unsigned int length)
   path = (char *)malloc(1 + strlen(clientId) + strlen(topic));
   strcpy(path, clientId);
   strcat(path, topic);
-  mqttClient.publish(path, "true");
+  mqttClient.publish(path, "1");
   free(path);
   delay(100);
   //}
@@ -196,7 +196,7 @@ void printBuffer(uint8_t *buf, int len)
   {
     DEBUGPRINTFDEBUG("%02x", buf[i]);
   }
-  DEBUGPRINTFDEBUG("\n");
+  DEBUGPRINTFDEBUG("\r\n");
 }
 
 void parse_value(uint8_t *buf, int len)
@@ -212,7 +212,7 @@ void parse_value(uint8_t *buf, int len)
       float temp = x / 10.0;
       x = buf[5] | (buf[6] << 8);
       float humidity = x / 10.0;
-      //DEBUGPRINTFDEBUG("Temp: %.1f°, Humidity: %.1f %%\n", temp, humidity);
+      //DEBUGPRINTFDEBUG("Temp: %.1f°, Humidity: %.1f %%\r\n", temp, humidity);
       tempData.Temp = temp;
       tempData.Humidity = humidity;
     }
@@ -220,14 +220,15 @@ void parse_value(uint8_t *buf, int len)
   case 0x04:
   {
     float temp = x / 10.0;
-    //DEBUGPRINTFDEBUG("Temp: %.1f°\n", temp);
+
+    //DEBUGPRINTFDEBUG("Temp: %.1f°\r\n", temp);
     tempData.Temp = temp;
   }
   break;
   case 0x06:
   {
     float humidity = x / 10.0;
-    //DEBUGPRINTFDEBUG("Humidity: %.1f%%\n", humidity);
+    //DEBUGPRINTFDEBUG("Humidity: %.1f%%\r\n", humidity);
     tempData.Humidity = humidity;
   }
   break;
@@ -241,7 +242,7 @@ void parse_value(uint8_t *buf, int len)
       // DEBUGPRINTFDEBUG(", %d mV", battery_mv);
       tempData.VBat = battery_mv;
     }
-    // DEBUGPRINTFDEBUG("\n");
+    // DEBUGPRINTFDEBUG("\r\n");
   }
   break;
   default:
@@ -260,7 +261,7 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks
     while (data < rightBorder)
     {
       uint8_t blockLength = *data + 1;
-      //DEBUGPRINTFDEBUG("blockLength: 0x%02x\n", blockLength);
+      //DEBUGPRINTFDEBUG("blockLength: 0x%02x\r\n", blockLength);
       if (blockLength < 5)
       {
         data += blockLength;
@@ -268,15 +269,15 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks
       }
       uint8_t blockType = *(data + 1);
       uint16_t serviceType = *(uint16_t *)(data + 2);
-      //DEBUGPRINTFDEBUG("blockType: 0x%02x, 0x%04x\n", blockType, serviceType);
+      //DEBUGPRINTFDEBUG("blockType: 0x%02x, 0x%04x\r\n", blockType, serviceType);
       if (blockType == 0x16)
       { // https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile/
-        //DEBUGPRINTFDEBUG("blockType: 0x%02x, 0x%04x\n", blockType, serviceType);
+        //DEBUGPRINTFDEBUG("blockType: 0x%02x, 0x%04x\r\n", blockType, serviceType);
         /* 16-bit UUID for Members 0xFE95 Xiaomi Inc. https://btprodspecificationrefs.blob.core.windows.net/assigned-values/16-bit%20UUID%20Numbers%20Document.pdf */
         if (serviceType == 0xfe95 || serviceType == 0x181a)
         { // mi or custom service
-          //DEBUGPRINTFDEBUG("blockLength: 0x%02x\n", blockLength);
-          //DEBUGPRINTFDEBUG("blockType: 0x%02x, 0x%04x\n", blockType, serviceType);
+          //DEBUGPRINTFDEBUG("blockLength: 0x%02x\r\n", blockLength);
+          //DEBUGPRINTFDEBUG("blockType: 0x%02x, 0x%04x\r\n", blockType, serviceType);
           *foundBlockLength = blockLength;
           return data;
         }
@@ -299,15 +300,31 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks
     Data initData;
     tempData = initData;
     uint16_t serviceType = *(uint16_t *)(serviceData + 2);
-    DEBUGPRINTFDEBUG("Advertised Device: %s\n", advertisedDevice.toString().c_str());
-    DEBUGPRINTFDEBUG("Found service '%04x' data len: %d, \n", serviceType, serviceDataLength);
-    if (advertisedDevice.getName() == "ATC_50B64A") // Außen
+    DEBUGPRINTFDEBUG("Advertised Device: %s\r\n", advertisedDevice.toString().c_str());
+    DEBUGPRINTFDEBUG("Found service '%04x' data len: %d, \r\n", serviceType, serviceDataLength);
+    if (advertisedDevice.getName() == "ATC_50B64A") // Keller
     {
       dataIndex = 0;
     }
     else if (advertisedDevice.getName() == "ATC_AB94CF") // Wohnzimmer
     {
       dataIndex = 1;
+    }
+    else if (advertisedDevice.getName() == "ATC_A0FF18") // Heizraum
+    {
+      dataIndex = 2;
+    }
+    else if (advertisedDevice.getName() == "ATC_F4ADDB") // Bad
+    {
+      dataIndex = 3;
+    }
+    else if (advertisedDevice.getName() == "ATC_6FE1D5") // Eltern
+    {
+      dataIndex = 4;
+    }
+    else
+    {
+      return;
     }
 
     // printBuffer(serviceData, serviceDataLength);
@@ -334,7 +351,7 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks
           serviceDataLength -= payload[2] + 3;
           payload += payload[2] + 3;
         }
-        // DEBUGPRINTFDEBUG("count: %d\n", serviceData[8]);
+        // DEBUGPRINTFDEBUG("count: %d\r\n", serviceData[8]);
         tempData.Count = serviceData[8];
         newData = true;
       }
@@ -346,7 +363,7 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks
           // https://github.com/Magalex2x14/LYWSD03MMC-info
           // DEBUGPRINTFDEBUG("Crypted data[%d]! ", serviceDataLength - 15);
         }
-        // DEBUGPRINTFDEBUG("count: %d\n", serviceData[8]);
+        // DEBUGPRINTFDEBUG("count: %d\r\n", serviceData[8]);
       }
     }
     else
@@ -361,10 +378,10 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks
         mac[0] = serviceData[9];
         // DEBUGPRINTFDEBUG("MAC: ");
         // printBuffer(mac, 6);
-        float temp = *(uint16_t *)(serviceData + 10) / 100.0;
+        float temp = *(int16_t *)(serviceData + 10) / 100.0;
         float humidity = *(uint16_t *)(serviceData + 12) / 100.0;
         uint16_t vbat = *(uint16_t *)(serviceData + 14);
-        // DEBUGPRINTFDEBUG("Temp: %.2f°, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, cout: %d\n", temp, humidity, vbat, serviceData[16], serviceData[18], serviceData[17]);
+        // DEBUGPRINTFDEBUG("Temp: %.2f°, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, cout: %d\r\n", temp, humidity, vbat, serviceData[16], serviceData[18], serviceData[17]);
         tempData.Temp = temp;
         tempData.Humidity = humidity;
         tempData.VBat = vbat;
@@ -379,7 +396,7 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks
         int16_t x = (serviceData[10] << 8) | serviceData[11];
         float temp = x / 10.0;
         uint16_t vbat = x = (serviceData[14] << 8) | serviceData[15];
-        // DEBUGPRINTFDEBUG("Temp: %.1f°, Humidity: %d%%, Vbatt: %d, Battery: %d%%, cout: %d\n", temp, serviceData[12], vbat, serviceData[13], serviceData[16]);
+        // DEBUGPRINTFDEBUG("Temp: %.1f°, Humidity: %d%%, Vbatt: %d, Battery: %d%%, cout: %d\r\n", temp, serviceData[12], vbat, serviceData[13], serviceData[16]);
         tempData.Temp = temp;
         tempData.Humidity = serviceData[12];
         tempData.VBat = vbat;
@@ -417,8 +434,8 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks
 
 static void scanCompleteCB(BLEScanResults scanResults)
 {
-  // DEBUGPRINTFDEBUG("Scan complete!\n");
-  // DEBUGPRINTFDEBUG("We found %d devices\n", scanResults.getCount());
+  // DEBUGPRINTFDEBUG("Scan complete!\r\n");
+  // DEBUGPRINTFDEBUG("We found %d devices\r\n", scanResults.getCount());
   scanResults.dump();
   pBLEScan->start(scanTime, scanCompleteCB);
 } // scanCompleteCB
@@ -432,6 +449,7 @@ void setup()
   lastUpdated = millis() - (TIME_TO_SLEEP * 1000);
   lastLed = millis();
   pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);
   DEBUGPRINTLNNONE(bootCount);
 
   if (!enableUpdate)
@@ -466,7 +484,6 @@ void loop()
   else
   {
     char Data[MAX_PACKET_SIZE];
-    ArduinoOTA.handle();
     if (!mqttClient.connected())
     {
       mqttReconnect();
@@ -475,8 +492,17 @@ void loop()
 
     if (newData)
     {
-      Serial.printf("Keller: %.2f°C, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, count: %d\n", sensorData[0].Temp, sensorData[0].Humidity, sensorData[0].VBat, sensorData[0].Bat, sensorData[0].Flag, sensorData[0].Count);
-      Serial.printf("Wohnzimmer Temp: %.2f°C, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, count: %d\n", sensorData[1].Temp, sensorData[1].Humidity, sensorData[1].VBat, sensorData[1].Bat, sensorData[1].Flag, sensorData[1].Count);
+      uint8_t i = 0;
+      DEBUGPRINTFNONE("Keller: %.2f°C, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, count: %d\r\n", sensorData[i].Temp, sensorData[i].Humidity, sensorData[i].VBat, sensorData[i].Bat, sensorData[i].Flag, sensorData[i].Count);
+      i++;
+      DEBUGPRINTFNONE("Wohnzimmer Temp: %.2f°C, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, count: %d\r\n", sensorData[i].Temp, sensorData[i].Humidity, sensorData[i].VBat, sensorData[i].Bat, sensorData[i].Flag, sensorData[i].Count);
+      i++;
+      DEBUGPRINTFNONE("Heizraum Temp: %.2f°C, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, count: %d\r\n", sensorData[i].Temp, sensorData[i].Humidity, sensorData[i].VBat, sensorData[i].Bat, sensorData[i].Flag, sensorData[i].Count);
+      i++;
+      DEBUGPRINTFNONE("Bad Temp: %.2f°C, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, count: %d\r\n", sensorData[i].Temp, sensorData[i].Humidity, sensorData[i].VBat, sensorData[i].Bat, sensorData[i].Flag, sensorData[i].Count);
+      i++;
+      DEBUGPRINTFNONE("Eltern Temp: %.2f°C, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, count: %d\r\n", sensorData[i].Temp, sensorData[i].Humidity, sensorData[i].VBat, sensorData[i].Bat, sensorData[i].Flag, sensorData[i].Count);
+      i++;
       DEBUGPRINTLNNONE("");
       newData = false;
     }
@@ -511,6 +537,18 @@ void loop()
 
         case 1:
           topic = "/LivingRoom";
+          break;
+
+        case 2:
+          topic = "/HeatingRoom";
+          break;
+
+        case 3:
+          topic = "/Bath";
+          break;
+
+        case 4:
+          topic = "/Parents";
           break;
 
         default:
