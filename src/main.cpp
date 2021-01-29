@@ -17,17 +17,17 @@
 #include <BLEScan.h>
 
 //#include "Config.h" // make your own config file or remove this line and use the following lines
-const char *clientId = "Temperatures";
+const char *clientId = "Temperatures2";
 const char *mqtt_server = "192.168.2.64";
 #include "WifiCredentials.h"       // const char* ssid = "MySSID"; const char* WifiPassword = "MyPw";
-IPAddress ip(192, 168, 2, 8);      // Static IP
+IPAddress ip(192, 168, 2, 9);      // Static IP
 IPAddress dns(192, 168, 2, 1);     // most likely your router
 IPAddress gateway(192, 168, 2, 1); // most likely your router
 IPAddress subnet(255, 255, 255, 0);
 
 unsigned long lastUpdated;
 unsigned long lastLed;
-const char *nameprefix = "Tempratures";
+const char *nameprefix = "Tempratures2";
 uint8_t stateLed = HIGH;
 boolean updateActive;
 RTC_DATA_ATTR unsigned long bootCount;
@@ -52,7 +52,7 @@ BLEScan *pBLEScan;
 bool newData;
 int dataIndex;
 Data tempData;
-Data sensorData[8];
+Data sensorData[4];
 
 void setup_wifi()
 {
@@ -302,25 +302,21 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks
     uint16_t serviceType = *(uint16_t *)(serviceData + 2);
     DEBUGPRINTFDEBUG("Advertised Device: %s\r\n", advertisedDevice.toString().c_str());
     DEBUGPRINTFDEBUG("Found service '%04x' data len: %d, \r\n", serviceType, serviceDataLength);
-    if (advertisedDevice.getName() == "ATC_50B64A") // Keller
+    if (advertisedDevice.getName() == "ATC_F4ADDB") // Bad
     {
       dataIndex = 0;
     }
-    else if (advertisedDevice.getName() == "ATC_AB94CF") // Wohnzimmer
+    else if (advertisedDevice.getName() == "ATC_6FE1D5") // Eltern
     {
       dataIndex = 1;
     }
-    else if (advertisedDevice.getName() == "ATC_A0FF18") // Heizraum
+        else if (advertisedDevice.getName() == "ATC_67B4CC") // Kind
     {
       dataIndex = 2;
     }
-    else if (advertisedDevice.getName() == "ATC_F4ADDB") // Bad
+        else if (advertisedDevice.getName() == "ATC_D24D9F") // Dach
     {
       dataIndex = 3;
-    }
-    else if (advertisedDevice.getName() == "ATC_6FE1D5") // Eltern
-    {
-      dataIndex = 4;
     }
     else
     {
@@ -493,15 +489,13 @@ void loop()
     if (newData)
     {
       uint8_t i = 0;
-      DEBUGPRINTFNONE("Keller: %.2f°C, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, count: %d\r\n", sensorData[i].Temp, sensorData[i].Humidity, sensorData[i].VBat, sensorData[i].Bat, sensorData[i].Flag, sensorData[i].Count);
-      i++;
-      DEBUGPRINTFNONE("Wohnzimmer Temp: %.2f°C, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, count: %d\r\n", sensorData[i].Temp, sensorData[i].Humidity, sensorData[i].VBat, sensorData[i].Bat, sensorData[i].Flag, sensorData[i].Count);
-      i++;
-      DEBUGPRINTFNONE("Heizraum Temp: %.2f°C, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, count: %d\r\n", sensorData[i].Temp, sensorData[i].Humidity, sensorData[i].VBat, sensorData[i].Bat, sensorData[i].Flag, sensorData[i].Count);
-      i++;
       DEBUGPRINTFNONE("Bad Temp: %.2f°C, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, count: %d\r\n", sensorData[i].Temp, sensorData[i].Humidity, sensorData[i].VBat, sensorData[i].Bat, sensorData[i].Flag, sensorData[i].Count);
       i++;
       DEBUGPRINTFNONE("Eltern Temp: %.2f°C, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, count: %d\r\n", sensorData[i].Temp, sensorData[i].Humidity, sensorData[i].VBat, sensorData[i].Bat, sensorData[i].Flag, sensorData[i].Count);
+      i++;
+            DEBUGPRINTFNONE("Katja Temp: %.2f°C, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, count: %d\r\n", sensorData[i].Temp, sensorData[i].Humidity, sensorData[i].VBat, sensorData[i].Bat, sensorData[i].Flag, sensorData[i].Count);
+      i++;
+            DEBUGPRINTFNONE("Dachboden Temp: %.2f°C, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, count: %d\r\n", sensorData[i].Temp, sensorData[i].Humidity, sensorData[i].VBat, sensorData[i].Bat, sensorData[i].Flag, sensorData[i].Count);
       i++;
       DEBUGPRINTLNNONE("");
       newData = false;
@@ -531,24 +525,21 @@ void loop()
         char *topic;
         switch (i)
         {
+
         case 0:
-          topic = "/Basement";
-          break;
-
-        case 1:
-          topic = "/LivingRoom";
-          break;
-
-        case 2:
-          topic = "/HeatingRoom";
-          break;
-
-        case 3:
           topic = "/Bath";
           break;
 
-        case 4:
+        case 1:
           topic = "/Parents";
+          break;
+
+                case 2:
+          topic = "/Child";
+          break;
+
+        case 3:
+          topic = "/Atic";
           break;
 
         default:
