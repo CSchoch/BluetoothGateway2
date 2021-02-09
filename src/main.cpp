@@ -310,11 +310,11 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks
     {
       dataIndex = 1;
     }
-        else if (advertisedDevice.getName() == "ATC_67B4CC") // Kind
+    else if (advertisedDevice.getName() == "ATC_67B4CC") // Kind
     {
       dataIndex = 2;
     }
-        else if (advertisedDevice.getName() == "ATC_D24D9F") // Dach
+    else if (advertisedDevice.getName() == "ATC_D24D9F") // Dach
     {
       dataIndex = 3;
     }
@@ -454,8 +454,8 @@ void setup()
     BLEDevice::init("");
     pBLEScan = BLEDevice::getScan();
     pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks(), true);
-    pBLEScan->setInterval(625); // default 100
-    pBLEScan->setWindow(625);   // default 100, less or equal setInterval value
+    pBLEScan->setInterval(500); // default 100
+    pBLEScan->setWindow(100);   // default 100, less or equal setInterval value
     pBLEScan->setActiveScan(true);
     pBLEScan->start(scanTime, scanCompleteCB);
     DEBUGPRINTLNNONE("Now scanning in the background ... scanCompleteCB() will be called when done.");
@@ -493,9 +493,9 @@ void loop()
       i++;
       DEBUGPRINTFNONE("Eltern Temp: %.2f°C, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, count: %d\r\n", sensorData[i].Temp, sensorData[i].Humidity, sensorData[i].VBat, sensorData[i].Bat, sensorData[i].Flag, sensorData[i].Count);
       i++;
-            DEBUGPRINTFNONE("Katja Temp: %.2f°C, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, count: %d\r\n", sensorData[i].Temp, sensorData[i].Humidity, sensorData[i].VBat, sensorData[i].Bat, sensorData[i].Flag, sensorData[i].Count);
+      DEBUGPRINTFNONE("Katja Temp: %.2f°C, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, count: %d\r\n", sensorData[i].Temp, sensorData[i].Humidity, sensorData[i].VBat, sensorData[i].Bat, sensorData[i].Flag, sensorData[i].Count);
       i++;
-            DEBUGPRINTFNONE("Dachboden Temp: %.2f°C, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, count: %d\r\n", sensorData[i].Temp, sensorData[i].Humidity, sensorData[i].VBat, sensorData[i].Bat, sensorData[i].Flag, sensorData[i].Count);
+      DEBUGPRINTFNONE("Dachboden Temp: %.2f°C, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, count: %d\r\n", sensorData[i].Temp, sensorData[i].Humidity, sensorData[i].VBat, sensorData[i].Bat, sensorData[i].Flag, sensorData[i].Count);
       i++;
       DEBUGPRINTLNNONE("");
       newData = false;
@@ -534,7 +534,7 @@ void loop()
           topic = "/Parents";
           break;
 
-                case 2:
+        case 2:
           topic = "/Child";
           break;
 
