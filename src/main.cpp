@@ -17,7 +17,7 @@
 #include <BLEScan.h>
 
 //#include "Config.h" // make your own config file or remove this line and use the following lines
-const char *clientId = "Temperatures2";
+const char *clientId = "Temperatures/1OG";
 const char *mqtt_server = "192.168.2.64";
 #include "WifiCredentials.h"       // const char* ssid = "MySSID"; const char* WifiPassword = "MyPw";
 IPAddress ip(192, 168, 2, 9);      // Static IP
@@ -52,7 +52,7 @@ BLEScan *pBLEScan;
 bool newData;
 int dataIndex;
 Data tempData;
-Data sensorData[4];
+Data sensorData[8];
 
 void setup_wifi()
 {
@@ -302,21 +302,37 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks
     uint16_t serviceType = *(uint16_t *)(serviceData + 2);
     DEBUGPRINTFDEBUG("Advertised Device: %s\r\n", advertisedDevice.toString().c_str());
     DEBUGPRINTFDEBUG("Found service '%04x' data len: %d, \r\n", serviceType, serviceDataLength);
-    if (advertisedDevice.getName() == "ATC_F4ADDB") // Bad
+    if (advertisedDevice.getName() == "ATC_50B64A") // Keller
     {
       dataIndex = 0;
     }
-    else if (advertisedDevice.getName() == "ATC_6FE1D5") // Eltern
+    else if (advertisedDevice.getName() == "ATC_AB94CF") // Wohnzimmer
     {
       dataIndex = 1;
     }
-    else if (advertisedDevice.getName() == "ATC_67B4CC") // Kind
+    else if (advertisedDevice.getName() == "ATC_A0FF18") // Heizraum
     {
       dataIndex = 2;
     }
-    else if (advertisedDevice.getName() == "ATC_D24D9F") // Dach
+    else if (advertisedDevice.getName() == "ATC_350AB8") // Flur
     {
       dataIndex = 3;
+    }
+    else if (advertisedDevice.getName() == "ATC_F4ADDB") // Bad
+    {
+      dataIndex = 4;
+    }
+    else if (advertisedDevice.getName() == "ATC_6FE1D5") // Eltern
+    {
+      dataIndex = 5;
+    }
+    else if (advertisedDevice.getName() == "ATC_67B4CC") // Kind
+    {
+      dataIndex = 6;
+    }
+    else if (advertisedDevice.getName() == "ATC_D24D9F") // Dach
+    {
+      dataIndex = 7;
     }
     else
     {
@@ -489,6 +505,14 @@ void loop()
     if (newData)
     {
       uint8_t i = 0;
+      DEBUGPRINTFNONE("Keller: %.2f°C, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, count: %d\r\n", sensorData[i].Temp, sensorData[i].Humidity, sensorData[i].VBat, sensorData[i].Bat, sensorData[i].Flag, sensorData[i].Count);
+      i++;
+      DEBUGPRINTFNONE("Wohnzimmer Temp: %.2f°C, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, count: %d\r\n", sensorData[i].Temp, sensorData[i].Humidity, sensorData[i].VBat, sensorData[i].Bat, sensorData[i].Flag, sensorData[i].Count);
+      i++;
+      DEBUGPRINTFNONE("Heizraum Temp: %.2f°C, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, count: %d\r\n", sensorData[i].Temp, sensorData[i].Humidity, sensorData[i].VBat, sensorData[i].Bat, sensorData[i].Flag, sensorData[i].Count);
+      i++;
+      DEBUGPRINTFNONE("Flur Temp: %.2f°C, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, count: %d\r\n", sensorData[i].Temp, sensorData[i].Humidity, sensorData[i].VBat, sensorData[i].Bat, sensorData[i].Flag, sensorData[i].Count);
+      i++;
       DEBUGPRINTFNONE("Bad Temp: %.2f°C, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, count: %d\r\n", sensorData[i].Temp, sensorData[i].Humidity, sensorData[i].VBat, sensorData[i].Bat, sensorData[i].Flag, sensorData[i].Count);
       i++;
       DEBUGPRINTFNONE("Eltern Temp: %.2f°C, Humidity: %.2f%%, Vbatt: %d, Battery: %d%%, flg: 0x%02x, count: %d\r\n", sensorData[i].Temp, sensorData[i].Humidity, sensorData[i].VBat, sensorData[i].Bat, sensorData[i].Flag, sensorData[i].Count);
@@ -525,23 +549,38 @@ void loop()
         char *topic;
         switch (i)
         {
-
         case 0:
-          topic = "/Bath";
+          topic = "/Basement";
           break;
 
         case 1:
-          topic = "/Parents";
+          topic = "/LivingRoom";
           break;
 
         case 2:
-          topic = "/Child";
+          topic = "/HeatingRoom";
           break;
 
         case 3:
-          topic = "/Atic";
+          topic = "/Corridor";
           break;
 
+        case 4:
+          topic = "/Bath";
+          break;
+
+        case 5:
+          topic = "/Parents";
+          break;
+
+        case 6:
+          topic = "/Child";
+          break;
+
+        case 7:
+          topic = "/Atic";
+          break;
+          
         default:
           topic = "/Unknown";
           break;
